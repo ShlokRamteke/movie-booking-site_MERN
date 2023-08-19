@@ -9,6 +9,7 @@ const app = express();
 const db = process.env.DATABASE;
 
 //middlewares
+app.use(express.json());
 app.use("/user", userRouter);
 
 mongoose
