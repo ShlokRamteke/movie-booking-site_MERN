@@ -7,26 +7,28 @@ export const addAdmin = async (req, res, next) => {
   if (!email && email.trim() === "" && !password && password.trim() === "") {
     return res.status(422).json({ message: "Invalid Inputs" });
   }
-  let exisitingAdmin;
+
+  let existingAdmin;
   try {
-    exisitingAdmin = await Admin.findOne({ email });
-  } catch (error) {
-    return console.log(error);
+    existingAdmin = await Admin.findOne({ email });
+  } catch (err) {
+    return console.log(err);
   }
-  if (exisitingAdmin) {
-    return res.status(400).json({ message: "Admin already exisits" });
+
+  if (existingAdmin) {
+    return res.status(400).json({ message: "Admin already exists" });
   }
 
   let admin;
-  const hasedPassword = bcrypt.hashSync(password);
+  const hashedPassword = bcrypt.hashSync(password);
   try {
-    admin = new Admin({ email, password: hasedPassword });
+    admin = new Admin({ email, password: hashedPassword });
     admin = await admin.save();
-  } catch (error) {
-    return console.log(error);
+  } catch (err) {
+    return console.log(err);
   }
   if (!admin) {
-    return res.status(500).json({ messgae: "Unabel to store admin" });
+    return res.status(500).json({ message: "Unable to store admin" });
   }
   return res.status(201).json({ admin });
 };
@@ -36,30 +38,57 @@ export const adminLogin = async (req, res, next) => {
   if (!email && email.trim() === "" && !password && password.trim() === "") {
     return res.status(422).json({ message: "Invalid Inputs" });
   }
-  let exisitingAdmin;
+  let existingAdmin;
   try {
-    exisitingAdmin = await Admin.findOne({ email });
-  } catch (error) {
-    return console.log(error);
+    existingAdmin = await Admin.findOne({ email });
+  } catch (err) {
+    return console.log(err);
   }
-  if (!exisitingAdmin) {
+  if (!existingAdmin) {
     return res.status(400).json({ message: "Admin not found" });
   }
-
-  const isPasswordCorret = bcrypt.compareSync(
+  const isPasswordCorrect = bcrypt.compareSync(
     password,
-    exisitingAdmin.password
+    existingAdmin.password
   );
 
-  if (!isPasswordCorret) {
+  if (!isPasswordCorrect) {
     return res.status(400).json({ message: "Incorrect Password" });
   }
 
-  const token = jwt.sign({ id: exisitingAdmin._id }, process.env.SECRET_KEY, {
+  const token = jwt.sign({ id: existingAdmin._id }, process.env.SECRET_KEY, {
     expiresIn: "7d",
   });
 
   return res
     .status(200)
-    .json({ message: "Authenticatio Complete", token, id: exisitingAdmin._id });
+    .json({ message: "Authentication Complete", token, id: existingAdmin._id });
+};
+
+export const getAdmins = async (req, res, next) => {
+  let admins;
+  try {
+    admins = await Admin.find();
+  } catch (err) {
+    return console.log(err);
+  }
+  if (!admins) {
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+  return res.status(200).json({ admins });
+};
+
+export const getAdminById = async (req, res, next) => {
+  const id = req.params.id;
+
+  let admin;
+  try {
+    admin = await Admin.findById(id).populate("addedMovies");
+  } catch (err) {
+    return console.log(err);
+  }
+  if (!admin) {
+    return console.log("Cannot find Admin");
+  }
+  return res.status(200).json({ admin });
 };

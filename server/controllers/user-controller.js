@@ -1,15 +1,15 @@
 import User from "../models/User";
 import bcrypt from "bcryptjs";
-
+import Bookings from "../models/Bookings";
 export const getAllUsers = async (req, res, next) => {
   let users;
   try {
     users = await User.find();
-  } catch (error) {
-    return console.log(error);
+  } catch (err) {
+    return console.log(err);
   }
   if (!users) {
-    return res.status(500).json({ message: "Unexpected error occured" });
+    return res.status(500).json({ message: "Unexpected Error Occured" });
   }
   return res.status(200).json({ users });
 };
@@ -26,21 +26,19 @@ export const signup = async (req, res, next) => {
   ) {
     return res.status(422).json({ message: "Invalid Inputs" });
   }
-  const hasedPassword = bcrypt.hashSync(password);
-
+  const hashedPassword = bcrypt.hashSync(password);
   let user;
   try {
-    user = new User({ name, email, password: hasedPassword });
+    user = new User({ name, email, password: hashedPassword });
     user = await user.save();
-  } catch (error) {
-    return console.log(error);
+  } catch (err) {
+    return console.log(err);
   }
   if (!user) {
-    return res.status(500).json({ message: "Unexpected error occured" });
+    return res.status(500).json({ message: "Unexpected Error Occured" });
   }
-  return res.status(201).json({ user });
+  return res.status(201).json({ id: user._id });
 };
-
 export const updateUser = async (req, res, next) => {
   const id = req.params.id;
   const { name, email, password } = req.body;
@@ -54,32 +52,31 @@ export const updateUser = async (req, res, next) => {
   ) {
     return res.status(422).json({ message: "Invalid Inputs" });
   }
-  const hasedPassword = bcrypt.hashSync(password);
+  const hashedPassword = bcrypt.hashSync(password);
 
   let user;
   try {
     user = await User.findByIdAndUpdate(id, {
       name,
       email,
-      password: hasedPassword,
+      password: hashedPassword,
     });
-  } catch (error) {
-    return console.log(error);
+  } catch (errr) {
+    return console.log(errr);
   }
   if (!user) {
     return res.status(500).json({ message: "Something went wrong" });
   }
-  res.status(200).json({ message: "Updated sucessfully" });
+  res.status(200).json({ message: "Updated Sucessfully" });
 };
 
 export const deleteUser = async (req, res, next) => {
   const id = req.params.id;
-
   let user;
   try {
     user = await User.findByIdAndRemove(id);
-  } catch (error) {
-    return console.log(error);
+  } catch (err) {
+    return console.log(err);
   }
   if (!user) {
     return res.status(500).json({ message: "Something went wrong" });
@@ -92,23 +89,54 @@ export const login = async (req, res, next) => {
   if (!email && email.trim() === "" && !password && password.trim() === "") {
     return res.status(422).json({ message: "Invalid Inputs" });
   }
-
   let existingUser;
   try {
     existingUser = await User.findOne({ email });
-  } catch (error) {
-    return console.log(error);
+  } catch (err) {
+    return console.log(err);
   }
 
   if (!existingUser) {
-    return res.status(404).json({ message: "Unable to find from this ID" });
+    return res
+      .status(404)
+      .json({ message: "Unable to find user from this ID" });
   }
 
-  const isPasswordCorret = bcrypt.compareSync(password, existingUser.password);
+  const isPasswordCorrect = bcrypt.compareSync(password, existingUser.password);
 
-  if (!isPasswordCorret) {
+  if (!isPasswordCorrect) {
     return res.status(400).json({ message: "Incorrect Password" });
   }
 
-  return res.status(200).json({ message: "Login sucessful" });
+  return res
+    .status(200)
+    .json({ message: "Login Successfull", id: existingUser._id });
+};
+export const getBookingsOfUser = async (req, res, next) => {
+  const id = req.params.id;
+  let bookings;
+  try {
+    bookings = await Bookings.find({ user: id })
+      .populate("movie")
+      .populate("user");
+  } catch (err) {
+    return console.log(err);
+  }
+  if (!bookings) {
+    return res.status(500).json({ message: "Unable to get Bookings" });
+  }
+  return res.status(200).json({ bookings });
+};
+export const getUserById = async (req, res, next) => {
+  const id = req.params.id;
+  let user;
+  try {
+    user = await User.findById(id);
+  } catch (err) {
+    return console.log(err);
+  }
+  if (!user) {
+    return res.status(500).json({ message: "Unexpected Error Occured" });
+  }
+  return res.status(200).json({ user });
 };
