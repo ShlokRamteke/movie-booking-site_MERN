@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   AppBar,
   Autocomplete,
@@ -9,10 +9,18 @@ import {
   Toolbar,
 } from "@mui/material";
 import MovieFilterIcon from "@mui/icons-material/MovieFilter";
+import { getAllMovies } from "../api-helpers/api-helpers";
 
-const dummyArray = ["Memory", "Forest Grump", "Pathan"];
 const Header = () => {
   const [value, setValue] = useState(0);
+
+  const [movies, setMovies] = useState([]);
+
+  useEffect(() => {
+    getAllMovies()
+      .then((data) => setMovies(data.movies))
+      .catch((error) => console.log(error));
+  }, []);
 
   return (
     <AppBar sx={{ bgcolor: "#2b2d42" }}>
@@ -23,7 +31,7 @@ const Header = () => {
         <Box width={"30%"} margin={"auto"}>
           <Autocomplete
             freeSolo
-            options={dummyArray.map((option) => option)}
+            options={movies && movies.map((option) => option.title)}
             renderInput={(params) => (
               <TextField
                 sx={{ input: { color: "white" } }}
