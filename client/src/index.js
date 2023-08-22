@@ -7,7 +7,7 @@ import axios from "axios";
 import { Provider } from "react-redux";
 import { store } from "./store";
 const root = ReactDOM.createRoot(document.getElementById("root"));
-axios.defaults.baseURL = "http://localhost:8000";
+axios.defaults.baseURL = process.env.REACT_APP_BASE_URLS;
 root.render(
   <React.StrictMode>
     <BrowserRouter>
