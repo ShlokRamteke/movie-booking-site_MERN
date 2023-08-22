@@ -2,34 +2,51 @@ import React, { useEffect, useState } from "react";
 import {
   AppBar,
   Autocomplete,
-  Box,
+  IconButton,
   Tab,
   Tabs,
   TextField,
   Toolbar,
 } from "@mui/material";
-import MovieFilterIcon from "@mui/icons-material/MovieFilter";
+import MovieIcon from "@mui/icons-material/Movie";
+import { Box } from "@mui/system";
 import { getAllMovies } from "../api-helpers/api-helpers";
-
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { adminActions, userActions } from "../store";
 const Header = () => {
-  const [value, setValue] = useState(0);
-
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const isAdminLoggedIn = useSelector((state) => state.admin.isLoggedIn);
+  const isUserLoggedIn = useSelector((state) => state.user.isLoggedIn);
+  const [value, setValue] = useState();
   const [movies, setMovies] = useState([]);
-
   useEffect(() => {
     getAllMovies()
       .then((data) => setMovies(data.movies))
-      .catch((error) => console.log(error));
+      .catch((err) => console.log(err));
   }, []);
-
+  const logout = (isAdmin) => {
+    dispatch(isAdmin ? adminActions.logout() : userActions.logout());
+  };
+  const handleChange = (e, val) => {
+    const movie = movies.find((m) => m.title === val);
+    console.log(movie);
+    if (isUserLoggedIn) {
+      navigate(`/booking/${movie._id}`);
+    }
+  };
   return (
-    <AppBar sx={{ bgcolor: "#2b2d42" }}>
+    <AppBar position="sticky" sx={{ bgcolor: "#2b2d42" }}>
       <Toolbar>
         <Box width={"20%"}>
-          <MovieFilterIcon />
+          <IconButton LinkComponent={Link} to="/">
+            <MovieIcon />
+          </IconButton>
         </Box>
-        <Box width={"30%"} margin={"auto"}>
+        <Box width={"30%"} margin="auto">
           <Autocomplete
+            onChange={handleChange}
             freeSolo
             options={movies && movies.map((option) => option.title)}
             renderInput={(params) => (
@@ -37,7 +54,7 @@ const Header = () => {
                 sx={{ input: { color: "white" } }}
                 variant="standard"
                 {...params}
-                placeholder="Search Movies"
+                placeholder="Search Acroos Multiple Movies"
               />
             )}
           />
@@ -49,9 +66,36 @@ const Header = () => {
             value={value}
             onChange={(e, val) => setValue(val)}
           >
-            <Tab label="Admin" />
-            <Tab label="Auth" />
-            <Tab label="Movies" />
+            <Tab LinkComponent={Link} to="/movies" label="Movies" />
+            {!isAdminLoggedIn && !isUserLoggedIn && (
+              <>
+                <Tab label="Admin" LinkComponent={Link} to="/admin" />
+                <Tab label="Auth" LinkComponent={Link} to="/auth" />
+              </>
+            )}
+            {isUserLoggedIn && (
+              <>
+                <Tab label="Profile" LinkComponent={Link} to="/user" />
+                <Tab
+                  onClick={() => logout(false)}
+                  label="Logout"
+                  LinkComponent={Link}
+                  to="/"
+                />
+              </>
+            )}
+            {isAdminLoggedIn && (
+              <>
+                <Tab label="Add Movie" LinkComponent={Link} to="/add" />
+                <Tab label="Profile" LinkComponent={Link} to="/user-admin" />
+                <Tab
+                  onClick={() => logout(true)}
+                  label="Logout"
+                  LinkComponent={Link}
+                  to="/"
+                />
+              </>
+            )}
           </Tabs>
         </Box>
       </Toolbar>
